@@ -15,13 +15,17 @@ int main()
     auto indexes = data.second;
     cout << "Number of Clusters: " << *(indexes.end() - 1) + 1 << endl;
     //Clustering DNA strands
-    int edit_th = 6;
-    int ngram = 3;
-    int anchorLen = 3;
-    int hashLen = 6;
-    int low_th = 10;
-    int high_th = 30;
-    auto ans = compute_comm(copies, edit_th, ngram, anchorLen, hashLen, low_th, high_th);
+    Config params;
+    params.r = 5;
+    params.q = 3;
+    params.w = 4;
+    params.l = 2;
+    params.theta_low = 10;
+    params.theta_high = 20;
+    params.core_num = 4;
+    params.local_steps = 10;
+    params.comm_steps = 30;
+    auto ans = compute_comm(copies, params);
     for(auto & cluster : ans)
     {
         cout << "###############################################" << endl;

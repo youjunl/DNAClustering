@@ -79,10 +79,9 @@ int blocking_bsd(string str1, string str2, const int blockLen, const int q)
     return ans;
 }
 
-vector<vector<string>> compute_comm(vector<string> S, int r, int q, int w, int l, int theta_low, int theta_high)
+vector<vector<string>> compute_comm(vector<string> S, Config params)
 {
-    int len = w + l;
-    int num_core = 4;
+    int len = params.w + params.l;
     vector<vector<string>> C(S.size());
     // Initialization
     for (int i = 0; i < S.size(); i++)
@@ -90,14 +89,13 @@ vector<vector<string>> compute_comm(vector<string> S, int r, int q, int w, int l
         C[i].push_back(S[i]);
     }
 
-    for (int comm_step = 0; comm_step < 20; comm_step++)
+    for (int comm_step = 0; comm_step < params.comm_steps; comm_step++)
     {
-        cout << "Communication Step : " << comm_step << endl;
         // Random anchor
-        string anchor = random_anchor(w);
+        string anchor = random_anchor(params.w);
 
         // Partition map
-        vector<vector<vector<string>>> Partition(num_core);
+        vector<vector<vector<string>>> Partition(params.core_num);
         // Get representatives and compute hash value
         for (int i = 0; i < C.size(); i++)
         {
@@ -106,27 +104,33 @@ vector<vector<string>> compute_comm(vector<string> S, int r, int q, int w, int l
             // bitset<20> bit_val(hash_val);
             // srand(bit_val.to_ulong());
             srand((unsigned)time(NULL));
-            Partition[rand() % num_core].push_back(C[i]);
+            Partition[rand() % params.core_num].push_back(C[i]);
         }
         // Reset S
         C.resize(0);
+        // Multi-thread
+        
         for (int i = 0; i < Partition.size(); i++)
         {
-            compute_local(Partition[i], r, q, w, l, theta_low, theta_high);
+            compute_local(Partition[i], params);     
+        }
+        // Start all the core and wait until finish
+        for (int i = 0; i < Partition.size(); i++)
+        {
             C.insert(C.begin(), Partition[i].begin(), Partition[i].end());
         }
     }
     return C;
 }
 
-void compute_local(vector<vector<string>> & C, int r, int q, int w, int l, int theta_low, int theta_high)
+void compute_local(vector<vector<string>> & C, Config params)
 {
-    int len = w + l;
+    int len = params.w + params.l;
     // Local Steps
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < params.local_steps; i++)
     {
         // Random anchor
-        string anchor = random_anchor(w);
+        string anchor = random_anchor(params.w);
         vector<string> bucket(C.size());
         vector<string> hashval(C.size());
         // Group list
@@ -150,12 +154,12 @@ void compute_local(vector<vector<string>> & C, int r, int q, int w, int l, int t
                 string str1 = bucket[j], str2 = bucket[k];
                 if (hashval[j].compare(hashval[k]) == 0)
                 {
-                    int distance = blocking_bsd(str1, str2, 22, q);
-                    if (distance > theta_high)
+                    int distance = blocking_bsd(str1, str2, 22, params.q);
+                    if (distance > params.theta_high)
                     {
                         continue; // Skip
                     }
-                    else if (distance <= theta_low || (distance <= theta_high && editDistance(str1, str2, str1.size(), str2.size()) <= r))
+                    else if (distance <= params.theta_low || (distance <= params.theta_high && editDistance(str1, str2, str1.size(), str2.size()) <= params.r))
                     {      
                         group[k] = group[j]; // Merge
                     }

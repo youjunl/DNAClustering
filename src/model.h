@@ -13,9 +13,22 @@
 #include<time.h>
 #include<bitset>
 #include<math.h>
-#include<thread>
+//#include<mpi.h>
 
 using namespace std;
+
+struct Config
+{
+    int r = 6; 
+    int q = 3; 
+    int w = 3;
+    int l = 6;
+    int theta_low = 10;
+    int theta_high = 30;
+    int core_num = 4;
+    int local_steps = 20;
+    int comm_steps = 20;
+};
 
 /*
 Calculate edit distance between two strings (minimum number of operation 
@@ -43,8 +56,13 @@ int bsd(string str1, string str2, const int q);
 /*
 Clustering in core
 */
-vector<vector<string>> compute_comm(vector<string> S, int r, int q, int w, int l, int theta_low, int theta_high);
-void compute_local(vector<vector<string>> & C, int r, int q, int w, int l, int theta_low, int theta_high);
+vector<vector<string>> compute_comm(vector<string> S, Config params);
+
+void compute_local(vector<vector<string>> & C, Config params);
+
 string random_anchor(int w);
+
 string random_sample(vector<string> cur);
+
+
 #endif
