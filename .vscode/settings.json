@@ -11,6 +11,10 @@
         "type_traits": "cpp",
         "xhash": "cpp",
         "xutility": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "xlocale": "cpp",
+        "deque": "cpp",
+        "bitset": "cpp",
+        "iostream": "cpp"
     }
 }

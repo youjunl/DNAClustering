@@ -1,3 +1,6 @@
+#ifndef DATA_H
+#define DATA_H 
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<iostream>
@@ -18,5 +21,6 @@ vector<string> readCenterText(string file);
 /*
 Function for reading noisy copies data
 */
-vector<string> readCopyText(string file);
+pair<vector<string>, vector<int>> readCopyText(string file);
 
+#endif

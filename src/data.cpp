@@ -26,7 +26,7 @@ vector<string> readCenterText(string file)
     return ans;
 }
 
-vector<string> readCopyText(string file)
+pair<vector<string>, vector<int>> readCopyText(string file)
 {
     // Input buffer
     char buffer[MAX_IN_BUFFER];
@@ -37,7 +37,9 @@ vector<string> readCopyText(string file)
     // Output error message if failed
     assert(infile.is_open());
 
-    vector<string> ans;
+    vector<string> data;
+    vector<int> indexes;
+    int cnt = 0;
     while(infile.good() && !infile.eof())
     {
         // Empty buffer
@@ -47,9 +49,15 @@ vector<string> readCopyText(string file)
         // Remove delimiter and get data
         if(buffer[0] != '=')
         {
-            ans.push_back((string)buffer);
+            data.push_back((string)buffer);
+            indexes.push_back(cnt);
+        }
+        else
+        {
+            ++cnt;
         }
     }
-    cout << "Imported " << ans.size() << " copies" << endl;
+    cout << "Imported " << data.size() << " copies" << endl;
+    pair<vector<string>, vector<int>> ans = {data, indexes};
     return ans;
 }
