@@ -11,7 +11,9 @@
 #include<unordered_map>
 #include<queue>
 #include<time.h>
-#include <bitset>
+#include<bitset>
+#include<math.h>
+#include<thread>
 
 using namespace std;
 
@@ -42,7 +44,7 @@ int bsd(string str1, string str2, const int q);
 Clustering in core
 */
 vector<vector<string>> compute_comm(vector<string> S, int r, int q, int w, int l, int theta_low, int theta_high);
-vector<vector<string>> compute_local(vector<vector<string>> C, int r, int q, int w, int l, int theta_low, int theta_high);
+void compute_local(vector<vector<string>> & C, int r, int q, int w, int l, int theta_low, int theta_high);
 string random_anchor(int w);
 string random_sample(vector<string> cur);
 #endif
