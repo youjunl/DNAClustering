@@ -9,18 +9,32 @@
 #include<cassert>
 #include<cstring>
 
+
 #define MAX_IN_BUFFER 1024 // Buffer size for reading sequence data
 
 using namespace std;
 
+class Sequence
+{
+    public:
+    Sequence(string pdata, int pcluster)
+    {
+        data = pdata;
+        cluster = pcluster;
+    }
+        string data;
+        int cluster;
+        int est_cluster;
+};
+
 /*
 Function for reading centers data
 */
-vector<string> readCenterText(string file);
+vector<string> readCenterText(const char * file);
 
 /*
 Function for reading noisy copies data
 */
-pair<vector<string>, vector<int>> readCopyText(string file);
+vector<Sequence> readCopyText(const char * file);
 
 #endif

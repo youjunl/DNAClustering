@@ -3,61 +3,59 @@ For reading the nanopore dataset
 */
 #include"data.h"
 
-vector<string> readCenterText(string file)
+vector<string> readCenterText(const char * file)
 {
+    FILE * infile = fopen(file, "r");
+    size_t linesz = MAX_IN_BUFFER;
+
     // Input buffer
     char buffer[MAX_IN_BUFFER];
-
-    ifstream infile;
-    infile.open(file.data());
-
-    // Output error message if failed
-    assert(infile.is_open());
-
+    memset(buffer, 0, MAX_IN_BUFFER);
     vector<string> ans;
-    while(infile.good() && !infile.eof())
+
+    while(!feof(infile))
     {
         // Empty buffer
         memset(buffer, 0, MAX_IN_BUFFER);
-        infile.getline(buffer, MAX_IN_BUFFER);
-        ans.push_back((string)buffer);
+        fgets(buffer, MAX_IN_BUFFER, infile);
+        string converted_buffer = (string)buffer;
+        converted_buffer[converted_buffer.size() - 1] = 0;
+        ans.push_back(converted_buffer);
     }
     cout << "Imported " << ans.size() << " centers" << endl;
     return ans;
 }
 
-pair<vector<string>, vector<int>> readCopyText(string file)
+vector<Sequence> readCopyText(const char * file)
 {
+    FILE * infile = fopen(file, "r");
+    size_t linesz = MAX_IN_BUFFER;
+
     // Input buffer
     char buffer[MAX_IN_BUFFER];
-
-    ifstream infile;
-    infile.open(file.data());
-
-    // Output error message if failed
-    assert(infile.is_open());
-
-    vector<string> data;
-    vector<int> indexes;
+    memset(buffer, 0, MAX_IN_BUFFER);
+    vector<Sequence> ans;
     int cnt = 0;
-    while(infile.good() && !infile.eof())
+    while(!feof(infile))
     {
         // Empty buffer
         memset(buffer, 0, MAX_IN_BUFFER);
-        infile.getline(buffer, MAX_IN_BUFFER);
+        fgets(buffer, MAX_IN_BUFFER, infile);
 
         // Remove delimiter and get data
         if(buffer[0] != '=')
         {
-            data.push_back((string)buffer);
-            indexes.push_back(cnt);
+            string converted_buffer = (string)buffer;
+            converted_buffer[converted_buffer.size() - 1] = 0;
+            Sequence data(converted_buffer, cnt);
+            ans.push_back(data);
         }
         else
         {
             ++cnt;
         }
     }
-    cout << "Imported " << data.size() << " copies" << endl;
-    pair<vector<string>, vector<int>> ans = {data, indexes};
+    cout << "Imported " << ans.size() << " copies" << endl;
+    cout << "Number of Clusters: " << cnt + 1 << endl;
     return ans;
 }

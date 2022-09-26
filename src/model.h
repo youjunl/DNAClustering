@@ -4,30 +4,31 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<iostream>
-#include<fstream>
 #include<vector>
-#include<cassert>
 #include<cstring>
 #include<unordered_map>
-#include<queue>
 #include<time.h>
 #include<bitset>
 #include<math.h>
-//#include<mpi.h>
+#include<mpi.h>
+#include<omp.h>
+#include<algorithm>
+#include"data.h"
 
 using namespace std;
 
-struct Config
+class Config
 {
-    int r = 6; 
-    int q = 3; 
-    int w = 3;
-    int l = 6;
-    int theta_low = 10;
-    int theta_high = 30;
-    int core_num = 4;
-    int local_steps = 20;
-    int comm_steps = 20;
+    public:
+        int r = 6; 
+        int q = 3; 
+        int w = 3;
+        int l = 6;
+        int theta_low = 10;
+        int theta_high = 30;
+        int core_num = 4;
+        int local_steps = 20;
+        int comm_steps = 20;
 };
 
 /*
@@ -56,13 +57,13 @@ int bsd(string str1, string str2, const int q);
 /*
 Clustering in core
 */
-vector<vector<string>> compute_comm(vector<string> S, Config params);
+vector<vector<Sequence>> compute_comm(vector<Sequence> & S, Config params);
 
-void compute_local(vector<vector<string>> & C, Config params);
+void compute_local(vector<vector<Sequence>> & C, Config params);
 
 string random_anchor(int w);
 
-string random_sample(vector<string> cur);
+Sequence random_sample(vector<Sequence> cur);
 
 
 #endif
