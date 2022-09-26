@@ -40,7 +40,7 @@ int editDistance(string str1, string str2, int m, int n);
 /*
 Calculate accuracy between the ground truth and estimated result
 */
-double accuracy(unordered_map<int, vector<int>> c, unordered_map<int, vector<int>> est_c);
+double accuracy(vector<vector<Sequence>> C, double gamma);
 
 /*
 Hashing for sequence using anchor
@@ -65,5 +65,5 @@ string random_anchor(int w);
 
 Sequence random_sample(vector<Sequence> cur);
 
-
+void remove_empty(vector<vector<Sequence>> & C);
 #endif

@@ -16,10 +16,10 @@ int main()
     params.w = 4;
     params.l = 12;
     params.theta_low = 40;
-    params.theta_high = 60;
+    params.theta_high = 80;
     params.core_num = 8;
     params.local_steps = 30;
-    params.comm_steps = 130;
+    params.comm_steps = 26;
     cout << "Clustering..." << endl;
     auto ans = compute_comm(copies, params);
     int clustered_num = 0;
@@ -34,11 +34,17 @@ int main()
     }
     cout << clustered_num << endl;
     
+    string t1 = "TGGTTAACGTCCCACGGCGAGGCACTCTTGATCCCCACCTTCAAGAGGTGTACCGATCAAGGAGAACAAGCATACGTCGCACGCACACCATTGGACGGCGAGTGCTGAGT";
+    string t2 = "TCCAGTTAACGTCCCACGGCGAGCACTTGATCCCCACCTTCAAGAGGTGTGTACCGGATCATGGGAATAGCATACGTCGCACGCACACCATTGGACGGCGAGTGCCGAGT";
+    cout << blocking_bsd(t1, t2, 22, 3) << endl;
+    cout << editDistance(t1, t2, t1.size(), t2.size()) << endl;
+
     return 0;
 }
 
 /*
 TO DO
-1. Accuracy
-2. Parallel for
+1. Merge
+2. Random
+3. Parallel for
 */

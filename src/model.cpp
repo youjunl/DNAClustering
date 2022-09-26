@@ -86,7 +86,7 @@ int blocking_bsd(string str1, string str2, const int blockLen, const int q)
 
 vector<vector<Sequence>> compute_comm(vector<Sequence> &S, Config params)
 {
-    int len = params.w + params.l;
+    const int len = params.w + params.l;
     vector<vector<Sequence>> C(S.size());
     // Initialization
     for (int i = 0; i < S.size(); i++)
@@ -100,18 +100,20 @@ vector<vector<Sequence>> compute_comm(vector<Sequence> &S, Config params)
         cout << "Communication Step: " << comm_step << endl;
         // Random anchor
         string anchor = random_anchor(params.w);
-
         // Partition map
         vector<vector<vector<Sequence>>> Partition(params.core_num);
         // Get representatives and compute hash value
         for (int i = 0; i < C.size(); i++)
         {
-            //srand((unsigned)time(NULL));
-            string sample = (random_sample(C[i])).data;
+            auto represent = random_sample(C[i]);
+            string sample = represent.data;
             string hash_val = compute_hash(sample, anchor, len);
-            // bitset<20> bit_val(hash_val);
-            // srand(bit_val.to_ulong());
+            //bitset<hash_bin_size> bit_val(hash_val);
+            //srand((int)bit_val.to_ulong());
             //srand((unsigned)time(NULL));
+            unsigned int hash_num = (int)hash_val[0] << 12 + (int)hash_val[1] << 4 + (int)hash_val[2] >> 4;
+            srand(hash_num);
+            //cout << rand() % params.core_num << ' ' << represent.cluster << endl;
             Partition[rand() % params.core_num].push_back(C[i]);
         }
         // Reset S
@@ -128,6 +130,9 @@ vector<vector<Sequence>> compute_comm(vector<Sequence> &S, Config params)
         {
             C.insert(C.begin(), Partition[i].begin(), Partition[i].end());
         }
+        // Output Accuracy
+        auto acc = accuracy(C, 0.7);
+        cout << acc << endl;
     }
 
     // Add estimated indexes for result
@@ -145,7 +150,7 @@ vector<vector<Sequence>> compute_comm(vector<Sequence> &S, Config params)
 
 void compute_local(vector<vector<Sequence>> &C, Config params)
 {
-    int len = params.w + params.l;
+    const int len = params.w + params.l;
     // Local Steps
     for (int i = 0; i < params.local_steps; i++)
     {
@@ -153,7 +158,6 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
         string anchor = random_anchor(params.w);
         vector<Sequence> bucket;
         vector<string> hashval(C.size());
-        
         unordered_map<int, int> merge_map;
 
         // Get representatives and compute hash value
@@ -165,9 +169,9 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
             }
             auto sample = random_sample(C[j]);
             bucket.push_back(sample);
-            merge_map[sample.est_cluster] = j; // <cluster index, number in the set>
+            merge_map[sample.est_cluster] = j; // <cluster index, vector index>
         }
-        // Put in bucket and merge clusters and sort
+        // Put in bucket and merge clusters and sort the reads based on hashval;
         sort(bucket.begin(), bucket.end(), cmp);
 
         // Compute hash for samples in buckets
@@ -182,7 +186,8 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
             for (int k = j + 1; k < min(j + 20, bucket_len); k++)
             {
                 string str1 = bucket[j].data, str2 = bucket[k].data;
-                if (hashval[j].compare(hashval[k]) == 0)
+                //if (hashval[j].compare(hashval[k]) == 0)
+                if(true)
                 {
                     int distance = blocking_bsd(str1, str2, 22, params.q);
                     if (distance > params.theta_high)
@@ -194,36 +199,30 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
                         // Merge j and k
                         int ind1 = bucket[j].est_cluster;
                         int ind2 = bucket[k].est_cluster;
-                        // Merge all elements from cluster ind1 to cluster ind2
-                        for(auto & it : C[merge_map[ind1]])
+                        // Merge all elements from cluster ind2 to cluster ind1
+                        int c_size = C[merge_map[ind2]].size();
+                        for(int h = 0; h < c_size; h++)
                         {
-                            it.est_cluster = ind2;
-                            C[merge_map[ind2]].push_back(it);
+                            auto tmp = C[merge_map[ind2]][h];
+                            tmp.est_cluster = ind1;
+                            //it.est_cluster = ind1;
+                            C[merge_map[ind1]].push_back(tmp);
                         }
                         // Clear origin cluster after merging
-                        C[merge_map[ind1]].clear();
+                        C[merge_map[ind2]].clear();
+                        // Redirect parent
                     }
                 }
             }
         }
     }
-
     // remove empty clusters
-    vector<vector<Sequence>> new_C;
-    for (auto & cluster : C)
-    {
-        if (cluster.size() != 0)
-        {
-            new_C.push_back(cluster);
-        }
-    }
-    C = new_C;    
+    remove_empty(C);
 }
 
 // Generate a random anchor
 string random_anchor(int w)
 {
-    srand((unsigned)time(NULL));
     string anchor = "";
     for (int i = 0; i < w; i++)
     {
@@ -236,4 +235,59 @@ string random_anchor(int w)
 Sequence random_sample(vector<Sequence> cur)
 {
     return cur.size() > 1 ? cur[rand() % cur.size()] : cur[0];
+}
+
+// Compute accuracy
+double accuracy(vector<vector<Sequence>> C, double gamma)
+{
+    int n = C.size(), cnt = 0;
+    unordered_map<int, int> mapping; // <est index, index>
+    unordered_map<int, int> groundTruth; // <index, count>
+    for(auto & cluster : C)
+    {
+        for(auto & it : cluster)
+        {
+            ++groundTruth[it.cluster];
+        }
+    }
+    for(auto & cluster : C)
+    {
+        int index = cluster[0].cluster;
+        int est_index = cluster[0].est_cluster;
+        int num = cluster.size();        
+        if(num == 0 || num < (double)groundTruth[index]*gamma)
+        {
+            continue;
+        }
+        for(auto & it : cluster)
+        {
+            // Exist false positive
+            if(it.cluster != index)
+            {
+                break;
+            }
+            --num;
+        }
+        // Exist false positive
+        if(num != 0)
+        {
+            continue;
+        }
+        ++cnt;
+    }
+    return (double)cnt/(double)n;
+}
+
+void remove_empty(vector<vector<Sequence>> & C)
+{
+    // remove empty clusters
+    vector<vector<Sequence>> new_C;
+    for (auto & cluster : C)
+    {
+        if (cluster.size() != 0)
+        {
+            new_C.push_back(cluster);
+        }
+    }
+    C = new_C; 
 }
