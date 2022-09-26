@@ -21,7 +21,9 @@
     "functional": "cpp",
     "string_view": "cpp",
     "iosfwd": "cpp",
-    "*.tcc": "cpp"
+    "*.tcc": "cpp",
+    "new": "cpp",
+    "array": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "C:/Program Files/mingw64/bin/gcc.exe",
   "C_Cpp_Runner.cppCompilerPath": "g++",

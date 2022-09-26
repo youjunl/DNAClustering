@@ -145,7 +145,7 @@ vector<vector<Sequence>> compute_comm(vector<Sequence> &S, Config params)
 
 void compute_local(vector<vector<Sequence>> &C, Config params)
 {
-    int len = params.w + params.l;
+    int len = params.w + params.l, count = C.size();
     // Local Steps
     for (int i = 0; i < params.local_steps; i++)
     {
@@ -153,9 +153,7 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
         string anchor = random_anchor(params.w);
         vector<Sequence> bucket;
         vector<string> hashval(C.size());
-        
-        unordered_map<int, int> merge_map;
-
+        vector<int> indexes(C.size());
         // Get representatives and compute hash value
         for (int j = 0; j < C.size(); j++)
         {
@@ -165,8 +163,9 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
             }
             auto sample = random_sample(C[j]);
             bucket.push_back(sample);
-            merge_map[sample.est_cluster] = j; // <cluster index, number in the set>
+            indexes[j] = sample.est_cluster;
         }
+        UnionSet IndexesMap(indexes);
         // Put in bucket and merge clusters and sort
         sort(bucket.begin(), bucket.end(), cmp);
 
@@ -190,34 +189,47 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
                         continue; // Skip
                     }
                     else if (distance <= params.theta_low || (distance <= params.theta_high && editDistance(str1, str2, str1.size(), str2.size()) <= params.r))
-                    {      
-                        // Merge j and k
+                    { 
+                        // Merge
                         int ind1 = bucket[j].est_cluster;
                         int ind2 = bucket[k].est_cluster;
-                        // Merge all elements from cluster ind1 to cluster ind2
-                        for(auto & it : C[merge_map[ind1]])
-                        {
-                            it.est_cluster = ind2;
-                            C[merge_map[ind2]].push_back(it);
-                        }
-                        // Clear origin cluster after merging
-                        C[merge_map[ind1]].clear();
+                        // Synchronize the index1 and index2
+                        IndexesMap.connect(ind1, ind2);
                     }
                 }
             }
         }
-    }
-
-    // remove empty clusters
-    vector<vector<Sequence>> new_C;
-    for (auto & cluster : C)
-    {
-        if (cluster.size() != 0)
+        // Update the clustering result
+        unordered_map<int, int> mapping; // <cluster index, vector index>
+        count = IndexesMap.count;
+        int vi = 0;
+        for(int i = 0; i < C.size(); i++)
         {
-            new_C.push_back(cluster);
+            indexes[i] = IndexesMap.find(indexes[i]);
+            if(mapping.find(indexes[i]) == mapping.end())
+            {
+                mapping[indexes[i]] = ++vi;
+            }
         }
+        
+        vector<vector<Sequence>> new_C(count);
+        for(int i = 0; i < C.size(); i++)
+        {
+            if(C[i].size() == 0)
+            {
+                continue;
+            }
+            int new_index = indexes[i];
+            int new_vi = mapping[new_index];
+            for(int j = 0; j < C[i].size(); j++)
+            {
+                C[i][j].est_cluster = new_index;
+                new_C[i].push_back(C[i][j]);
+            }
+            //new_C[i].insert(new_C.end(), C[i].begin(), C[i].end());
+        }
+        C = new_C;
     }
-    C = new_C;    
 }
 
 // Generate a random anchor
