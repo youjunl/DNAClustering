@@ -29,6 +29,9 @@ class Config
         int core_num = 4;
         int local_steps = 20;
         int comm_steps = 20;
+        double gamma = 0.9;
+        bool compute_acc = true;
+        int num_cluster = 510;
 };
 
 /*
@@ -40,7 +43,7 @@ int editDistance(string str1, string str2, int m, int n);
 /*
 Calculate accuracy between the ground truth and estimated result
 */
-double accuracy(vector<vector<Sequence>> C, double gamma);
+double accuracy(vector<vector<Sequence>> C, Config params);
 
 /*
 Hashing for sequence using anchor

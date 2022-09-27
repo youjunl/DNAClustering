@@ -105,18 +105,15 @@ vector<vector<Sequence>> compute_comm(vector<Sequence> &S, Config params)
         // Get representatives and compute hash value
         for (int i = 0; i < C.size(); i++)
         {
-            auto represent = random_sample(C[i]);
-            string sample = represent.data;
-            string hash_val = compute_hash(sample, anchor, len);
-            //bitset<hash_bin_size> bit_val(hash_val);
-            //srand((int)bit_val.to_ulong());
-            //srand((unsigned)time(NULL));
-            unsigned int hash_num = (int)hash_val[0] << 12 + (int)hash_val[1] << 4 + (int)hash_val[2] >> 4;
-            srand(hash_num);
+            // auto represent = random_sample(C[i]);
+            // string sample = represent.data;
+            // string hash_val = compute_hash(sample, anchor, len);
+            // unsigned int hash_num = (int)hash_val[0] << 12 + (int)hash_val[1] << 4 + (int)hash_val[2] >> 4;
+            // srand(hash_num);
             //cout << rand() % params.core_num << ' ' << represent.cluster << endl;
             Partition[rand() % params.core_num].push_back(C[i]);
         }
-        // Reset S
+        // Reset
         C.resize(0);
         // Multi-thread par for
 #pragma omp parallel for num_threads(8)
@@ -131,8 +128,11 @@ vector<vector<Sequence>> compute_comm(vector<Sequence> &S, Config params)
             C.insert(C.begin(), Partition[i].begin(), Partition[i].end());
         }
         // Output Accuracy
-        auto acc = accuracy(C, 0.7);
-        cout << acc << endl;
+        if(params.compute_acc)
+        {
+            auto acc = accuracy(C, params);
+            cout << "Accuracy: " << acc << endl;            
+        }
     }
 
     // Add estimated indexes for result
@@ -159,7 +159,6 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
         vector<Sequence> bucket;
         vector<string> hashval(C.size());
         unordered_map<int, int> merge_map;
-
         // Get representatives and compute hash value
         for (int j = 0; j < C.size(); j++)
         {
@@ -187,7 +186,7 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
             {
                 string str1 = bucket[j].data, str2 = bucket[k].data;
                 //if (hashval[j].compare(hashval[k]) == 0)
-                if(true)
+                if (true)
                 {
                     int distance = blocking_bsd(str1, str2, 22, params.q);
                     if (distance > params.theta_high)
@@ -238,7 +237,7 @@ Sequence random_sample(vector<Sequence> cur)
 }
 
 // Compute accuracy
-double accuracy(vector<vector<Sequence>> C, double gamma)
+double accuracy(vector<vector<Sequence>> C, Config params)
 {
     int n = C.size(), cnt = 0;
     unordered_map<int, int> mapping; // <est index, index>
@@ -254,8 +253,8 @@ double accuracy(vector<vector<Sequence>> C, double gamma)
     {
         int index = cluster[0].cluster;
         int est_index = cluster[0].est_cluster;
-        int num = cluster.size();        
-        if(num == 0 || num < (double)groundTruth[index]*gamma)
+        int num = cluster.size();
+        if(num == 0 || num < (double)groundTruth[index]*params.gamma)
         {
             continue;
         }
@@ -275,7 +274,7 @@ double accuracy(vector<vector<Sequence>> C, double gamma)
         }
         ++cnt;
     }
-    return (double)cnt/(double)n;
+    return (double)cnt/(double)params.num_cluster;
 }
 
 void remove_empty(vector<vector<Sequence>> & C)
