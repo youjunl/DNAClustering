@@ -1,5 +1,5 @@
 /*
-For reading the nanopore dataset
+For reading the nanopore dataset or generating a dataset
 */
 #include"data.h"
 
@@ -14,14 +14,13 @@ vector<string> readCenterText(const char * file)
     memset(buffer, 0, MAX_IN_BUFFER);
     vector<string> ans;
 
-    while(!feof(infile))
+    while(fgets(buffer, MAX_IN_BUFFER, infile))
     {
-        // Empty buffer
-        memset(buffer, 0, MAX_IN_BUFFER);
-        fgets(buffer, MAX_IN_BUFFER, infile);
         string converted_buffer = (string)buffer;
         converted_buffer[converted_buffer.size() - 1] = 0;
         ans.push_back(converted_buffer);
+        // Empty buffer
+        memset(buffer, 0, MAX_IN_BUFFER);
     }
     cout << "Imported " << ans.size() << " centers" << endl;
     return ans;
@@ -38,12 +37,8 @@ vector<Sequence> readCopyText(const char * file)
     memset(buffer, 0, MAX_IN_BUFFER);
     vector<Sequence> ans;
     int cnt = 0;
-    while(!feof(infile))
+    while(fgets(buffer, MAX_IN_BUFFER, infile))
     {
-        // Empty buffer
-        memset(buffer, 0, MAX_IN_BUFFER);
-        fgets(buffer, MAX_IN_BUFFER, infile);
-
         // Remove delimiter and get data
         if(buffer[0] != '=')
         {
@@ -56,6 +51,9 @@ vector<Sequence> readCopyText(const char * file)
         {
             ++cnt;
         }
+
+        // Empty buffer
+        memset(buffer, 0, MAX_IN_BUFFER);
     }
     cout << "Imported " << ans.size() << " copies" << endl;
     cout << "Number of Clusters: " << cnt + 1 << endl;

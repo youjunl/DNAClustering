@@ -17,6 +17,8 @@
 
 using namespace std;
 
+
+
 class Config
 {
     public:
@@ -24,6 +26,7 @@ class Config
         int q = 3; 
         int w = 3;
         int l = 6;
+        int n = 110;
         int theta_low = 10;
         int theta_high = 30;
         int core_num = 4;
@@ -53,9 +56,7 @@ string compute_hash(string target, string anchor, int len);
 /*
 Extract q-grams from inputs and calculate binary signature distance
 */
-int blocking_bsd(string str1, string str2, const int blockLen, const int q);
-
-int bsd(string str1, string str2, const int q);
+int compute_bsd(vector<bool> & iv1, vector<bool>& iv2);
 
 /*
 Clustering in core
@@ -69,4 +70,6 @@ string random_anchor(int w);
 Sequence random_sample(vector<Sequence> cur);
 
 void remove_empty(vector<vector<Sequence>> & C);
+
+vector<bool> compute_indicator(string str, int numBlock, int blockLen, const int q);
 #endif

@@ -1,13 +1,31 @@
 #include "model.h"
 
 unordered_map<int, string> dna_alphabet = {{0, "A"}, {1, "T"}, {2, "G"}, {3, "C"}};
-
+unordered_map<char, int> ind_alphabet = { {'A', 0}, {'T', 1}, {'G', 2}, {'C', 3}};
 /*
 Utility function to find minimum of three numbers
 */
 int min(int x, int y, int z) { return min(min(x, y), z); }
 
 bool cmp(Sequence a,Sequence b) {return a.data>b.data;}
+
+vector<bool> compute_indicator(string str, int numBlock, int blockLen, const int q)
+{
+    const int blockIVLen = pow(4, q); // 4^3 = 64
+    // Indicator vector
+    vector<bool> iv((str.size() / blockLen + 1) * blockIVLen, false);
+    for (int i = 0; i < str.size() - q + 1; i++)
+    {
+        int index = 0, carry = 1;
+        for (int j = q - 1; j >= 0; j--)
+        {
+            index += carry * ind_alphabet[str[i + j]];
+            carry *= 4;
+        }
+        iv[index + i/blockLen*blockIVLen] = true;
+    }
+    return iv;
+}
 
 int editDistance(string str1, string str2, int m, int n)
 {
@@ -41,45 +59,29 @@ string compute_hash(string str, string anchor, int len)
     return pos == string::npos ? str.substr(str.size() - len) : str.substr(pos, len);
 }
 
-int bsd(string str1, string str2, const int q)
+int compute_bsd(vector<bool>& iv1, vector<bool>& iv2)
 {
-    // Indicator vector
-    unordered_map<string, int> diff((int)pow(4, q));
-    int n = str1.size(), m = str2.size();
-    for (int i = 0; i < n - q + 1; i++)
-    {
-        diff[str1.substr(i, q)] = 1;
-    }
-    for (int i = 0; i < m - q + 1; i++)
-    {
-        string tmp = str2.substr(i, q);
-        diff[tmp] = diff.count(tmp) > 0 ? 0 : 1;
-    }
-
-    // Calculate final distance
+    // Calculate hamming distance between the indicator vectors
     int ans = 0;
-    for (auto it : diff)
+    const int maxLen = max(iv1.size(), iv2.size());
+    const int minLen = min(iv1.size(), iv2.size());
+    for (int i = 0; i < minLen; i++)
     {
-        ans += it.second;
+        ans += iv1[i] ^ iv2[i]; // XOR
     }
-    return ans;
-}
-
-int blocking_bsd(string str1, string str2, const int blockLen, const int q)
-{
-    // Segment the string into blocks
-    vector<string> str1_block, str2_block;
-    int n = str1.size(), m = str2.size();
-    int nblock = max(n, m) / blockLen + 1;
-    for (int i = 0; i < nblock; i++)
+    if (iv1.size() >= iv2.size())
     {
-        i *nblock >= n ? str1_block.push_back("") : str1_block.push_back(str1.substr(i * nblock));
-        i *nblock >= m ? str2_block.push_back("") : str2_block.push_back(str2.substr(i * nblock));
+        for (int i = minLen; i < maxLen; i++)
+        {
+            ans += (int)iv1[i];
+        }
     }
-    int ans = 0;
-    for (int i = 0; i < nblock; i++)
+    else
     {
-        ans += bsd(str1_block[i], str2_block[i], q);
+        for (int i = minLen; i < maxLen; i++)
+        {
+            ans += (int)iv2[i];
+        }
     }
     return ans;
 }
@@ -151,6 +153,10 @@ vector<vector<Sequence>> compute_comm(vector<Sequence> &S, Config params)
 void compute_local(vector<vector<Sequence>> &C, Config params)
 {
     const int len = params.w + params.l;
+    const int blockLen = 22;
+    const int numBlock = params.n / blockLen;
+    const int IVLen = pow(4, params.q) * numBlock;
+
     // Local Steps
     for (int i = 0; i < params.local_steps; i++)
     {
@@ -158,6 +164,7 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
         string anchor = random_anchor(params.w);
         vector<Sequence> bucket;
         vector<string> hashval(C.size());
+        vector<vector<bool>> indicators(C.size());
         unordered_map<int, int> merge_map;
         // Get representatives and compute hash value
         for (int j = 0; j < C.size(); j++)
@@ -177,40 +184,40 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
         for (int j = 0; j < bucket.size(); j++)
         {
             hashval[j] = compute_hash(bucket[j].data, anchor, len);
+            indicators[j] = compute_indicator(bucket[j].data, numBlock, blockLen, params.q);
         }
         int bucket_len = bucket.size();
+
         for (int j = 0; j < bucket_len; j++)
         {
             // Only compare adjacent elements
             for (int k = j + 1; k < min(j + 20, bucket_len); k++)
             {
                 string str1 = bucket[j].data, str2 = bucket[k].data;
-                //if (hashval[j].compare(hashval[k]) == 0)
-                if (true)
+
+                // 优化 提前计算导向向量，在这里进行比较
+                int distance = compute_bsd(indicators[j], indicators[k]);
+                if (distance > params.theta_high)
                 {
-                    int distance = blocking_bsd(str1, str2, 22, params.q);
-                    if (distance > params.theta_high)
+                    continue; // Skip
+                }
+                else if (distance <= params.theta_low || (distance <= params.theta_high && editDistance(str1, str2, str1.size(), str2.size()) <= params.r))
+                {      
+                    // Merge j and k
+                    int ind1 = bucket[j].est_cluster;
+                    int ind2 = bucket[k].est_cluster;
+                    // Merge all elements from cluster ind2 to cluster ind1
+                    int c_size = C[merge_map[ind2]].size();
+                    for(int h = 0; h < c_size; h++)
                     {
-                        continue; // Skip
+                        auto tmp = C[merge_map[ind2]][h];
+                        tmp.est_cluster = ind1;
+                        //it.est_cluster = ind1;
+                        C[merge_map[ind1]].push_back(tmp);
                     }
-                    else if (distance <= params.theta_low || (distance <= params.theta_high && editDistance(str1, str2, str1.size(), str2.size()) <= params.r))
-                    {      
-                        // Merge j and k
-                        int ind1 = bucket[j].est_cluster;
-                        int ind2 = bucket[k].est_cluster;
-                        // Merge all elements from cluster ind2 to cluster ind1
-                        int c_size = C[merge_map[ind2]].size();
-                        for(int h = 0; h < c_size; h++)
-                        {
-                            auto tmp = C[merge_map[ind2]][h];
-                            tmp.est_cluster = ind1;
-                            //it.est_cluster = ind1;
-                            C[merge_map[ind1]].push_back(tmp);
-                        }
-                        // Clear origin cluster after merging
-                        C[merge_map[ind2]].clear();
-                        // Redirect parent
-                    }
+                    // Clear origin cluster after merging
+                    C[merge_map[ind2]].clear();
+                    // Redirect parent
                 }
             }
         }
@@ -277,6 +284,8 @@ double accuracy(vector<vector<Sequence>> C, Config params)
     return (double)cnt/(double)params.num_cluster;
 }
 
+
+// Remove empty clusters
 void remove_empty(vector<vector<Sequence>> & C)
 {
     // remove empty clusters

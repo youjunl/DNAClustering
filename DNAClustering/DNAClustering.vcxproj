@@ -64,6 +64,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(MSMPI_INC)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,6 +96,10 @@
   <ItemGroup>
     <ClInclude Include="..\Src\data.h" />
     <ClInclude Include="..\Src\model.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Data\Centers.txt" />
+    <Text Include="..\Data\Clusters.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

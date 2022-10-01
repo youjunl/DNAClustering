@@ -16,16 +16,26 @@ using namespace std;
 
 class Sequence
 {
-    public:
+public:
     Sequence(string pdata, int pcluster)
     {
         data = pdata;
         cluster = pcluster;
     }
-        string data;
-        int cluster;
-        int est_cluster;
+    string data;
+    int cluster;
+    int est_cluster;
 };
+
+//class Dataset
+//{
+//public:
+//    Dataset(int numCenter, int numCopyPerCenter, float pi = 0.4, float pd = 0.4, float ps = 0.4)
+//    {
+//
+//    }
+//    vector<Sequence> data;
+//};
 
 /*
 Function for reading centers data
