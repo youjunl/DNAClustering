@@ -5,7 +5,8 @@ For reading the nanopore dataset
 
 vector<string> readCenterText(const char * file)
 {
-    FILE * infile = fopen(file, "r");
+    FILE* infile;
+    errno_t err = fopen_s(&infile, file, "r");
     size_t linesz = MAX_IN_BUFFER;
 
     // Input buffer
@@ -28,7 +29,8 @@ vector<string> readCenterText(const char * file)
 
 vector<Sequence> readCopyText(const char * file)
 {
-    FILE * infile = fopen(file, "r");
+    FILE* infile;
+    errno_t err = fopen_s(&infile, file, "r");
     size_t linesz = MAX_IN_BUFFER;
 
     // Input buffer

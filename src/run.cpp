@@ -1,12 +1,12 @@
 #include"model.h"
 #include"data.h"
 
-int main()
+int main(int argc,char *argv[])
 {
     //string center_path = "../test_data/Centers.txt";
     //string copies_path = "../test_data/Clusters.txt";
-    string center_path = "../test_data/mini_test_centers.txt";
-    string copies_path = "../test_data/mini_test_clusters.txt";
+    string center_path = "../Data/mini_test_centers2.txt";
+    string copies_path = "../Data/mini_test_cluster2.txt";
     //Read Data
     auto centers = readCenterText(center_path.c_str());
     auto copies = readCopyText(copies_path.c_str());
@@ -21,7 +21,7 @@ int main()
     params.core_num = 8;
     params.local_steps = 30;
     params.comm_steps = 26;
-    params.gamma = 0.6;
+    params.gamma = 0.9;
     params.compute_acc = true;
     params.num_cluster = centers.size();
     cout << "Clustering..." << endl;
@@ -38,7 +38,7 @@ int main()
     //     clustered_num += cluster.size();
     // }
     // cout << clustered_num << endl;
-
+    
     return 0;
 }
 

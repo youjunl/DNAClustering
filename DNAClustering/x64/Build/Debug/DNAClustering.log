@@ -1,0 +1,5 @@
+﻿  data.cpp
+  run.cpp
+E:\DNAClustering\Src\run.cpp(26,40): warning C4267: “=”: 从“size_t”转换到“int”，可能丢失数据
+  正在生成代码...
+  DNAClustering.vcxproj -> E:\DNAClustering\Build\x64\Debug\Run.exe
