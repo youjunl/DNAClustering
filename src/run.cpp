@@ -3,8 +3,8 @@
 
 int main(int argc,char *argv[])
 {
-    string center_path = "E:/DNAClustering/Data/Centers.txt";
-    string copies_path = "E:/DNAClustering/Data/Clusters.txt";
+    string center_path = "E:/DNAClustering/Data/generatedCenters.txt";
+    string copies_path = "E:/DNAClustering/Data/generatedCopies.txt";
     //string center_path = "E:/DNAClustering/Data/mini_test_centers.txt";
     //string copies_path = "E:/DNAClustering/Data/mini_test_cluster.txt";
     //Read Data

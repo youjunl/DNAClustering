@@ -190,12 +190,17 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
 
         for (int j = 0; j < bucket_len; j++)
         {
+            // If this cluster have been merged before, skip
+            if (C[merge_map[bucket[j].est_cluster]].size() == 0)
+            {
+                continue;
+            }
             // Only compare adjacent elements
-            for (int k = j + 1; k < min(j + 20, bucket_len); k++)
+            for (int k = j + 1; k < min(j + 100, bucket_len); k++)
             {
                 string str1 = bucket[j].data, str2 = bucket[k].data;
 
-                // 优化 提前计算导向向量，在这里进行比较
+                // compute hamming distance of indicator vectors
                 int distance = compute_bsd(indicators[j], indicators[k]);
                 if (distance > params.theta_high)
                 {
@@ -207,17 +212,13 @@ void compute_local(vector<vector<Sequence>> &C, Config params)
                     int ind1 = bucket[j].est_cluster;
                     int ind2 = bucket[k].est_cluster;
                     // Merge all elements from cluster ind2 to cluster ind1
-                    int c_size = C[merge_map[ind2]].size();
-                    for(int h = 0; h < c_size; h++)
+                    for (auto & it : C[merge_map[ind2]])
                     {
-                        auto tmp = C[merge_map[ind2]][h];
-                        tmp.est_cluster = ind1;
-                        //it.est_cluster = ind1;
-                        C[merge_map[ind1]].push_back(tmp);
+                        it.est_cluster = ind1;
+                        C[merge_map[ind1]].push_back(it);
                     }
                     // Clear origin cluster after merging
                     C[merge_map[ind2]].clear();
-                    // Redirect parent
                 }
             }
         }
